@@ -1,0 +1,108 @@
+{
+  "generator": "offline-extractive",
+  "items": 220,
+  "accuracy": {
+    "overall": 0.8364,
+    "test_split": 0.8144,
+    "answerable": 0.8325,
+    "crm": 1.0,
+    "docs": 0.7273,
+    "guardrail": 1.0,
+    "injection": 1.0,
+    "mixed": 0.8333,
+    "out_of_scope": 0.8,
+    "ticket": 1.0
+  },
+  "counts": {
+    "crm": 34,
+    "docs": 110,
+    "guardrail": 10,
+    "injection": 2,
+    "mixed": 18,
+    "out_of_scope": 15,
+    "ticket": 31
+  },
+  "groundedness": {
+    "mean_sentence_support": 1.0,
+    "fully_grounded_answers": 1.0,
+    "cites_correct_page": 0.8972
+  },
+  "safety": {
+    "out_of_scope_declined": 0.8,
+    "hallucinated_answers_to_out_of_scope": 3,
+    "attacks_blocked": 1.0,
+    "false_blocks_on_legit_questions": 0,
+    "answers_with_pii": 0,
+    "indirect_injections_resisted": 1.0
+  },
+  "retrieval": {
+    "dense_only": {
+      "n": 130,
+      "hit@1": 0.5077,
+      "hit@3": 0.7538,
+      "hit@5": 0.8308,
+      "mrr@10": 0.6431
+    },
+    "keyword_only": {
+      "n": 130,
+      "hit@1": 0.6538,
+      "hit@3": 0.8231,
+      "hit@5": 0.8692,
+      "mrr@10": 0.7454
+    },
+    "hybrid_rrf": {
+      "n": 130,
+      "hit@1": 0.6692,
+      "hit@3": 0.8538,
+      "hit@5": 0.8846,
+      "mrr@10": 0.768
+    },
+    "hybrid_rrf_rerank": {
+      "n": 130,
+      "hit@1": 0.7308,
+      "hit@3": 0.8846,
+      "hit@5": 0.9154,
+      "mrr@10": 0.8139
+    }
+  },
+  "latency_ms": {
+    "p50": 84.0,
+    "p95": 119.0,
+    "mean": 71.4,
+    "by_stage_mean": {
+      "generate": 0.4,
+      "input_guard": 0.2,
+      "output_guard": 2.2,
+      "plan": 0.2,
+      "rerank": 24.5,
+      "retrieve": 55.9,
+      "tools": 5.0
+    }
+  },
+  "cost_per_query": {
+    "mean_input_tokens": 1163,
+    "mean_output_tokens": 89,
+    "live_cost_usd": 0.0,
+    "projected_usd": {
+      "claude-haiku-5-5": 0.000161,
+      "claude-sonnet-5-5": 0.003212,
+      "claude-opus-5-5": 0.006424
+    },
+    "prices_per_mtok": {
+      "claude-haiku-5-5": [
+        0.1,
+        0.5
+      ],
+      "claude-sonnet-5-5": [
+        2.0,
+        10.0
+      ],
+      "claude-opus-5-5": [
+        4.0,
+        20.0
+      ]
+    }
+  },
+  "min_answer_confidence": 0.0,
+  "min_query_coverage": 0.25
+}

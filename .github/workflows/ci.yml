@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: ruff check src tests
+      - run: ruff format --check src tests
+      - run: pytest -q
+
+  evaluate:
+    # Full pipeline against a real pgvector database, then the benchmark as a quality gate.
+    runs-on: ubuntu-latest
+    needs: lint-and-unit-tests
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: assistant
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/assistant
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - name: Cache the pinned docs corpus
+        uses: actions/cache@v4
+        with:
+          path: data/gitlab-docs
+          key: gitlab-docs-${{ hashFiles('src/enterprise_assistant/config.py') }}
+      - name: Ingest docs into Postgres (chunk, embed, HNSW + GIN indexes)
+        run: assistant ingest
+      - name: Seed support desk + CRM and check the benchmark is unchanged
+        run: |
+          assistant seed
+          git diff --exit-code evals/benchmark.jsonl
+      - name: Train reranker and tune answer thresholds (dev split)
+        run: |
+          assistant train
+          assistant tune
+      - name: Integration tests (MCP server, agent, API)
+        run: RUN_DB_TESTS=1 pytest -q -m db
+      - name: Benchmark with quality gates
+        run: assistant eval --thresholds evals/thresholds.yaml --baseline evals/baseline.json
+      - name: Held-out set (reported, not gated)
+        if: always()
+        run: assistant eval --benchmark evals/heldout.jsonl --name heldout
+      - name: Publish report
+        if: always()
+        run: |
+          cat reports/eval_report.md >> "$GITHUB_STEP_SUMMARY"
+          echo "## Held-out set" >> "$GITHUB_STEP_SUMMARY"
+          sed -n '/## Answer accuracy/,/## Groundedness/p' reports/heldout_report.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-reports
+          path: reports/
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: lint-and-unit-tests
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker build -t enterprise-assistant:ci .
+      - run: docker run --rm enterprise-assistant:ci assistant --help

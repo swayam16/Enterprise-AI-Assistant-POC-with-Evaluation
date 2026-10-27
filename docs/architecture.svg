@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">Enterprise AI Assistant POC architecture</title>
+  <desc id="d">Requests flow from the demo UI through FastAPI into a LangGraph agent with input and output guardrails. The agent calls an MCP server for tickets and CRM data and runs hybrid search in Postgres with pgvector, then generates a cited answer offline or with Claude. Offline pipelines ingest the docs and run the evaluation harness in CI. Everything deploys to AWS ECS Fargate with RDS.</desc>
+  <style>
+    .bg { fill: #f7f8fa; }
+    .box { fill: #ffffff; stroke: #c9ced8; stroke-width: 1.2; }
+    .zone { fill: #eef2fb; stroke: #b9c5e6; stroke-width: 1.2; }
+    .zone2 { fill: #f1f6f1; stroke: #b8d0bb; stroke-width: 1.2; }
+    .zone3 { fill: #fbf4ec; stroke: #e2c9a8; stroke-width: 1.2; }
+    .step { fill: #ffffff; stroke: #4664c8; stroke-width: 1.4; }
+    .guard { fill: #fff4f2; stroke: #c4472f; stroke-width: 1.4; }
+    .h { font-size: 15px; font-weight: 700; fill: #1d2330; }
+    .t { font-size: 12.5px; fill: #2d3443; }
+    .s { font-size: 11.5px; fill: #5b6475; }
+    .lbl { font-size: 11px; font-weight: 700; letter-spacing: .08em; fill: #5b6475; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; fill: #2d3443; }
+    .arrow { stroke: #5b6475; stroke-width: 1.5; fill: none; marker-end: url(#a); }
+    .dash { stroke: #8a93a6; stroke-width: 1.3; fill: none; stroke-dasharray: 5 4; marker-end: url(#a); }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #15181e; } .box { fill: #1d2129; stroke: #3a4150; }
+      .zone { fill: #1b2236; stroke: #34426b; } .zone2 { fill: #1a271d; stroke: #34503a; }
+      .zone3 { fill: #2a2119; stroke: #5a4630; } .step { fill: #1d2129; stroke: #7f98ef; }
+      .guard { fill: #2c1c19; stroke: #e0705a; } .h { fill: #eceef3; } .t, .mono { fill: #d3d7e0; }
+      .s, .lbl { fill: #9aa3b5; } .arrow { stroke: #9aa3b5; } .dash { stroke: #7d8699; }
+      #a path { fill: #9aa3b5; }
+    }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5b6475"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1200" height="800" rx="14"/>
+
+  <!-- Entry -->
+  <text class="lbl" x="32" y="40">REQUEST PATH</text>
+  <rect class="box" x="32" y="56" width="190" height="74" rx="10"/>
+  <text class="h" x="48" y="84">Support engineer</text>
+  <text class="s" x="48" y="104">Demo UI or any API client</text>
+  <text class="s" x="48" y="120">"How do we fix SUP-1034?"</text>
+
+  <rect class="box" x="262" y="56" width="230" height="74" rx="10"/>
+  <text class="h" x="278" y="84">FastAPI service</text>
+  <text class="mono" x="278" y="104">POST /v1/ask  GET /v1/metrics</text>
+  <text class="mono" x="278" y="120">GET /healthz  GET /v1/report</text>
+  <path class="arrow" d="M222 93 H258"/>
+
+  <!-- Agent -->
+  <rect class="zone" x="32" y="156" width="1136" height="196" rx="12"/>
+  <text class="lbl" x="48" y="180">LANGGRAPH AGENT</text>
+  <path class="arrow" d="M377 130 V144 H185 V196"/>
+
+  <rect class="guard" x="48" y="200" width="150" height="80" rx="9"/>
+  <text class="h" x="62" y="224">Input guard</text>
+  <text class="s" x="62" y="243">prompt injection</text>
+  <text class="s" x="62" y="258">secret + PII redaction</text>
+  <text class="s" x="62" y="273">contact-detail refusal</text>
+
+  <rect class="step" x="222" y="200" width="160" height="80" rx="9"/>
+  <text class="h" x="236" y="224">Planner</text>
+  <text class="s" x="236" y="243">offline: rules (ticket IDs,</text>
+  <text class="s" x="236" y="258">accounts, CRM filters)</text>
+  <text class="s" x="236" y="273">LLM: Claude tool use</text>
+
+  <rect class="step" x="406" y="200" width="150" height="80" rx="9"/>
+  <text class="h" x="420" y="224">Act</text>
+  <text class="s" x="420" y="243">MCP client (stdio)</text>
+  <text class="s" x="420" y="258">tool output sanitized</text>
+  <text class="s" x="420" y="273">before generation</text>
+
+  <rect class="step" x="580" y="200" width="160" height="80" rx="9"/>
+  <text class="h" x="594" y="224">Retrieve + rerank</text>
+  <text class="s" x="594" y="243">dense + keyword, RRF</text>
+  <text class="s" x="594" y="258">logistic reranker</text>
+  <text class="s" x="594" y="273">answerability check</text>
+
+  <rect class="step" x="764" y="200" width="170" height="80" rx="9"/>
+  <text class="h" x="778" y="224">Generate</text>
+  <text class="s" x="778" y="243">cited answer [1][2]</text>
+  <text class="s" x="778" y="258">or "not in sources"</text>
+  <text class="s" x="778" y="273">tokens + cost tracked</text>
+
+  <rect class="guard" x="958" y="200" width="194" height="80" rx="9"/>
+  <text class="h" x="972" y="224">Output guard</text>
+  <text class="s" x="972" y="243">drop unsupported sentences</text>
+  <text class="s" x="972" y="258">redact leaked PII</text>
+  <text class="s" x="972" y="273">decline if ungrounded</text>
+
+  <path class="arrow" d="M198 240 H218"/>
+  <path class="arrow" d="M382 240 H402"/>
+  <path class="arrow" d="M556 240 H576"/>
+  <path class="arrow" d="M740 240 H760"/>
+  <path class="arrow" d="M934 240 H954"/>
+  <text class="s" x="48" y="306">Blocked requests skip straight to a refusal.</text>
+  <text class="s" x="48" y="322">LLM mode: Claude picks tools itself, inside the same guards.</text>
+
+  <!-- Data plane -->
+  <text class="lbl" x="32" y="392">TOOLS AND DATA</text>
+  <rect class="box" x="32" y="406" width="330" height="170" rx="10"/>
+  <text class="h" x="48" y="432">MCP server · support-desk</text>
+  <text class="s" x="48" y="450">read-only, contact details masked</text>
+  <text class="mono" x="48" y="476">get_ticket(ticket_id)</text>
+  <text class="mono" x="48" y="496">search_tickets(account, status, …)</text>
+  <text class="mono" x="48" y="516">get_account(name_or_id)</text>
+  <text class="mono" x="48" y="536">query_accounts(plan, renewal, …)</text>
+  <text class="s" x="48" y="562">stdio for the agent · HTTP for other clients</text>
+  <path class="arrow" d="M481 280 V340 Q481 352 469 352 H210 Q198 352 198 364 V402"/>
+
+  <rect class="box" x="402" y="406" width="420" height="170" rx="10"/>
+  <text class="h" x="418" y="432">PostgreSQL 16 + pgvector</text>
+  <text class="t" x="418" y="458">chunks: 768-d embeddings, HNSW (cosine)</text>
+  <text class="t" x="418" y="478">full-text tsvector, GIN, title/heading weighted</text>
+  <text class="t" x="418" y="498">RRF fusion in one SQL statement</text>
+  <text class="t" x="418" y="524">accounts · contacts · tickets (fictional)</text>
+  <text class="s" x="418" y="550">6,943 chunks from 508 GitLab docs pages</text>
+  <path class="arrow" d="M362 491 H398"/>
+  <path class="arrow" d="M660 280 V402"/>
+
+  <rect class="box" x="862" y="406" width="306" height="170" rx="10"/>
+  <text class="h" x="878" y="432">LLM (optional)</text>
+  <text class="t" x="878" y="458">Claude Sonnet 5.5 · Haiku 5.5</text>
+  <text class="t" x="878" y="478">or GPT-5.4 mini</text>
+  <text class="s" x="878" y="504">Default: offline extractive generator,</text>
+  <text class="s" x="878" y="520">no key, deterministic, $0 in CI.</text>
+  <text class="s" x="878" y="546">Cost per query projected from real</text>
+  <text class="s" x="878" y="562">prompt tokens × published prices.</text>
+  <path class="arrow" d="M849 280 V340 Q849 352 861 352 H1003 Q1015 352 1015 364 V402"/>
+
+  <!-- Offline pipelines -->
+  <text class="lbl" x="32" y="614">OFFLINE PIPELINES</text>
+  <rect class="zone2" x="32" y="628" width="540" height="64" rx="10"/>
+  <text class="h" x="48" y="652">Ingest</text>
+  <text class="s" x="108" y="652">GitLab docs @ pinned commit → clean → structure-aware chunks →</text>
+  <text class="s" x="108" y="670">embeddings → COPY → HNSW + GIN · reranker trained on synthetic queries</text>
+  <path class="dash" d="M420 628 V580"/>
+
+  <rect class="zone2" x="596" y="628" width="572" height="64" rx="10"/>
+  <text class="h" x="612" y="652">Evaluate</text>
+  <text class="s" x="684" y="652">220-item benchmark + 35 held-out: accuracy, groundedness, retrieval</text>
+  <text class="s" x="684" y="670">ablation, safety, latency, cost → GitHub Actions quality gate</text>
+
+  <!-- Deploy -->
+  <rect class="zone3" x="32" y="712" width="1136" height="62" rx="10"/>
+  <text class="lbl" x="48" y="736">AWS (TERRAFORM)</text>
+  <text class="t" x="48" y="758">ALB → ECS Fargate (API service + one-off init task) · RDS PostgreSQL 16 with pgvector · EFS for model artifacts · Secrets Manager · CloudWatch logs · ECR</text>
+</svg>

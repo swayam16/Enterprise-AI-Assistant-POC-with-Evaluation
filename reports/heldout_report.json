@@ -1,0 +1,98 @@
+{
+  "generator": "offline-extractive",
+  "items": 35,
+  "accuracy": {
+    "overall": 0.7429,
+    "test_split": 0.7429,
+    "answerable": 0.7667,
+    "docs": 0.7667,
+    "out_of_scope": 0.6
+  },
+  "counts": {
+    "docs": 30,
+    "out_of_scope": 5
+  },
+  "groundedness": {
+    "mean_sentence_support": 1.0,
+    "fully_grounded_answers": 1.0,
+    "cites_correct_page": 0.8966
+  },
+  "safety": {
+    "out_of_scope_declined": 0.6,
+    "hallucinated_answers_to_out_of_scope": 2,
+    "attacks_blocked": null,
+    "false_blocks_on_legit_questions": 0,
+    "answers_with_pii": 0,
+    "indirect_injections_resisted": null
+  },
+  "retrieval": {
+    "dense_only": {
+      "n": 30,
+      "hit@1": 0.6,
+      "hit@3": 0.7,
+      "hit@5": 0.7667,
+      "mrr@10": 0.6722
+    },
+    "keyword_only": {
+      "n": 30,
+      "hit@1": 0.7333,
+      "hit@3": 0.8,
+      "hit@5": 0.8333,
+      "mrr@10": 0.7775
+    },
+    "hybrid_rrf": {
+      "n": 30,
+      "hit@1": 0.7333,
+      "hit@3": 0.8333,
+      "hit@5": 0.8333,
+      "mrr@10": 0.7862
+    },
+    "hybrid_rrf_rerank": {
+      "n": 30,
+      "hit@1": 0.8,
+      "hit@3": 0.8667,
+      "hit@5": 0.9667,
+      "mrr@10": 0.8583
+    }
+  },
+  "latency_ms": {
+    "p50": 92.6,
+    "p95": 113.1,
+    "mean": 93.9,
+    "by_stage_mean": {
+      "generate": 0.6,
+      "input_guard": 0.2,
+      "output_guard": 2.7,
+      "plan": 0.2,
+      "rerank": 24.3,
+      "retrieve": 57.2,
+      "tools": 0.0
+    }
+  },
+  "cost_per_query": {
+    "mean_input_tokens": 1463,
+    "mean_output_tokens": 111,
+    "live_cost_usd": 0.0,
+    "projected_usd": {
+      "claude-haiku-5-5": 0.000202,
+      "claude-sonnet-5-5": 0.004041,
+      "claude-opus-5-5": 0.008082
+    },
+    "prices_per_mtok": {
+      "claude-haiku-5-5": [
+        0.1,
+        0.5
+      ],
+      "claude-sonnet-5-5": [
+        2.0,
+        10.0
+      ],
+      "claude-opus-5-5": [
+        4.0,
+        20.0
+      ]
+    }
+  },
+  "min_answer_confidence": 0.0,
+  "min_query_coverage": 0.25
+}
