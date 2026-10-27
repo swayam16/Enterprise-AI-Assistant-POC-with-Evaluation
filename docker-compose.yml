@@ -6,6 +6,7 @@
 services:
   db:
     image: pgvector/pgvector:pg16
+    shm_size: 1g
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: assistant

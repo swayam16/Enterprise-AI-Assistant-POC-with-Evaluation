@@ -36,6 +36,7 @@ jobs:
         ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U postgres" --health-interval 5s --health-retries 20
+          --shm-size 1g
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/assistant
     steps:

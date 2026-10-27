@@ -51,7 +51,10 @@ def load_chunks(conn: psycopg.Connection, chunks: list[Chunk], vectors: np.ndarr
 
 
 def build_indexes(conn: psycopg.Connection) -> None:
-    conn.execute("SET maintenance_work_mem = '256MB'")
+    # Parallel HNSW builds use dynamic shared memory, which Docker caps at 64 MB by default
+    # (the pgvector container in CI and docker compose). A serial build of ~7k vectors is fast.
+    conn.execute("SET maintenance_work_mem = '128MB'")
+    conn.execute("SET max_parallel_maintenance_workers = 0")
     conn.execute(
         "CREATE INDEX IF NOT EXISTS chunks_embedding_hnsw ON chunks "
         "USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 128)"

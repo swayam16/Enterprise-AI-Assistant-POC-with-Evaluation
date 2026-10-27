@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -186,7 +187,13 @@ def main() -> None:
     s.add_argument("--host", default="0.0.0.0")
     s.add_argument("--port", type=int, default=8000)
     args = p.parse_args()
-    globals()[f"cmd_{args.cmd}"](args)
+    try:
+        globals()[f"cmd_{args.cmd}"](args)
+    except Exception as exc:
+        if os.environ.get("GITHUB_ACTIONS"):  # surface the cause as a CI annotation
+            msg = f"{type(exc).__name__}: {exc}".replace("\n", "%0A")[:1500]
+            print(f"::error title=assistant {args.cmd} failed::{msg}")
+        raise
 
 
 if __name__ == "__main__":
